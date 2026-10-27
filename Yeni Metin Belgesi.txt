@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bağımsız Arnavutköy - Proje Yönetim ve Raporlama Portalı</title>
+  
+  <!-- Dışa Aktarma Kütüphaneleri (Excel, Word, PDF) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #1B5E20;
+      --primary-dark: #0f3d13;
+      --secondary: #2E7D32;
+      --accent: #E8F5E9;
+      --text: #1e293b;
+      --muted: #64748B;
+      --border: #CBD5E1;
+      --bg: #F8FAFC;
+      --white: #FFFFFF;
+      --danger: #DC2626;
+      --success: #16A34A;
+      --warning: #D97706;
+      --info: #0284C7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.5; padding-bottom: 50px; }
+    
+    /* Üst Şerit & Başlık */
+    .top-strip { background: var(--primary-dark); color: #a7f3d0; padding: 7px 16px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    header { background: var(--white); border-bottom: 2px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+    .header-inner { max-width: 1240px; margin: 0 auto; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .brand-box { display: flex; align-items: center; gap: 12px; }
+    .logo-badge { width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; }
+    .brand-titles h1 { font-size: 18px; font-weight: 800; color: var(--primary); line-height: 1.2; }
+    .brand-titles p { font-size: 11.5px; color: var(--muted); }
+    
+    /* Navigasyon Sekmeleri */
+    nav.nav-bar { background: var(--primary); padding: 0 16px; position: sticky; top: 0; z-index: 40; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .nav-inner { max-width: 1240px; margin: 0 auto; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+    .nav-btn { background: none; border: none; color: #dcfce7; padding: 12px 16px; font-size: 13.5px; font-weight: 600; cursor: pointer; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.2s; }
+    .nav-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+    .nav-btn.active { color: white; border-bottom-color: #4ade80; background: rgba(255,255,255,0.15); }
+    .nav-btn.hidden { display: none !important; }
+    
+    /* Genel Yerleşim */
+    .container { max-width: 1240px; margin: 20px auto; padding: 0 16px; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+    
+    /* Kart Yapıları */
+    .card { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+    .card-header { font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    
+    /* Sayaç Kutuları */
+    .stat-card { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 16px; border-left: 4px solid var(--primary); }
+    .stat-num { font-size: 28px; font-weight: 800; color: var(--text); }
+    .stat-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; }
+    
+    /* Formlar */
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 4px; color: #334155; }
+    .form-control { width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: 6px; background: white; }
+    .form-control:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 0 2px var(--accent); }
+    textarea.form-control { min-height: 80px; resize: vertical; }
+    
+    /* Butonlar */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 6px; border: 1px solid transparent; cursor: pointer; transition: 0.15s ease; text-decoration: none; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: #144717; }
+    .btn-secondary { background: white; border-color: var(--border); color: #334155; }
+    .btn-secondary:hover { background: #f1f5f9; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-sm { padding: 4px 8px; font-size: 11.5px; }
+    
+    /* Rozetler */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+    .badge-success { background: #dcfce7; color: #15803d; }
+    .badge-danger { background: #fee2e2; color: #b91c1c; }
+    .badge-warning { background: #fef3c7; color: #b45309; }
+    .badge-info { background: #e0f2fe; color: #0369a1; }
+    
+    /* Tablo */
+    .table-box { overflow-x: auto; border: 1px solid var(--border); border-radius: 6px; background: white; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: left; }
+    th { background: #f8fafc; color: #334155; font-weight: 700; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    tr:hover td { background: #fafafa; }
+    .empty-row { text-align: center; padding: 24px 12px; color: var(--muted); font-style: italic; }
+    
+    /* Uyarılar */
+    .alert { padding: 10px 14px; border-radius: 6px; font-size: 12.5px; margin-bottom: 12px; border-left: 4px solid transparent; }
+    .alert-info { background: #e0f2fe; color: #075985; border-color: #0284c7; }
+    .alert-warning { background: #fef3c7; color: #92400e; border-color: #d97706; }
+    .alert-danger { background: #fee2e2; color: #991b1b; border-color: #dc2626; }
+    
+    /* Bildirim Toast */
+    #toastNotice { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 12px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; display: none; z-index: 999; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+
+    /* Modallar */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; align-items: center; justify-content: center; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal-window { background: white; border-radius: 8px; width: 100%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; }
+    .modal-head { padding: 14px 18px; background: #f8fafc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-head h3 { font-size: 15px; font-weight: 700; color: var(--primary); }
+    .modal-body { padding: 18px; }
+    
+    /* Durum Noktaları */
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    .dot-green { background-color: var(--success); box-shadow: 0 0 0 2px #bbf7d0; }
+    .dot-red { background-color: var(--danger); box-shadow: 0 0 0 2px #fecaca; }
+
+    /* Yazdırma Gizleme */
+    @media print {
+      body { background: white; padding: 0; }
+      .top-strip, header, nav.nav-bar, .btn, .alert, #toastNotice, .no-print { display: none !important; }
+      .container { max-width: 100%; margin: 0; padding: 0; }
+      .card { border: none; box-shadow: none; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Üst Şerit -->
+  <div class="top-strip">
+    <span>T.C. Arnavutköy Kaymakamlığı - İlçe Millî Eğitim Müdürlüğü & Yeşilay Cemiyeti Arnavutköy Şubesi</span>
+    <span id="deadlineDisplay">Rapor Teslim Son Tarihi Hesaplanıyor...</span>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="header-inner">
+      <div class="brand-box">
+        <div class="logo-badge">Y</div>
+        <div class="brand-titles">
+          <h1 id="siteMainTitle">BAĞIMSIZ ARNAVUTKÖY PROJESİ</h1>
+          <p id="siteSubTitle">Bağımlılıkla Mücadele Okul Raporlama & İzleme Portalı</p>
+        </div>
+      </div>
+      <div id="authArea">
+        <button class="btn btn-primary" onclick="window.openLogin()">Giriş Yap</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigasyon Sekmeleri -->
+  <nav class="nav-bar">
+    <div class="nav-inner">
+      <button class="nav-btn active" id="btn-overview" onclick="window.showTab('overview')">Genel Bakış</button>
+      <button class="nav-btn" id="btn-documents" onclick="window.showTab('documents')">Gerekli Belgeler</button>
+      <button class="nav-btn hidden" id="btn-coordinator" onclick="window.showTab('coordinator')">Koordinatör Paneli</button>
+      <button class="nav-btn hidden" id="btn-adminStatus" onclick="window.showTab('adminStatus')">Okul Teslim Durumu</button>
+      <button class="nav-btn hidden" id="btn-adminActivities" onclick="window.showTab('adminActivities')">Faaliyet Tanımlama</button>
+      <button class="nav-btn hidden" id="btn-adminSchools" onclick="window.showTab('adminSchools')">Okul & Koordinatör Yönetimi</button>
+      <button class="nav-btn hidden" id="btn-adminReports" onclick="window.showTab('adminReports')">Rapor İndirme (Excel/Word/PDF)</button>
+      <button class="nav-btn hidden" id="btn-adminSettings" onclick="window.showTab('adminSettings')">Genel İçerik Ayarları</button>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- 1. GENEL BAKIŞ -->
+    <div id="tab-overview" class="tab-pane active">
+      <div class="card" style="border-left: 5px solid var(--primary);">
+        <h2 id="disp_overviewTitle" style="font-size: 18px; color: var(--primary); margin-bottom: 8px;">Projenin Amacı ve Kapsamı</h2>
+        <div id="disp_overviewPurpose" style="font-size: 13.5px; color: #334155; margin-bottom: 12px; white-space: pre-line;">
+          Bu proje; Arnavutköy İlçe Millî Eğitim Müdürlüğü ile Türkiye Yeşilay Cemiyeti Arnavutköy Şubesi ortaklığında, ilçedeki okul öncesi, ilkokul, ortaokul ve ortaöğretim kurumlarında bağımlılıkla mücadele çalışmalarının etkinliğini artırmak, sağlıklı yaşam bilinci oluşturmak ve uygulanan faaliyetleri düzenli olarak kayıt altına almak amacıyla yürütülmektedir.
+        </div>
+        <h3 style="font-size: 15px; color: var(--secondary); margin-bottom: 6px;">Hedef Kitle</h3>
+        <div id="disp_overviewTarget" style="font-size: 13.5px; color: #334155; white-space: pre-line;">
+          Arnavutköy ilçesinde öğrenim gören tüm temel eğitim ve ortaöğretim kademesindeki öğrenciler, veliler, öğretmenler ve okul personeli.
+        </div>
+      </div>
+
+      <!-- Canlı Metrikler -->
+      <div class="grid-4">
+        <div class="stat-card">
+          <div class="stat-title">Toplam Öğrenci</div>
+          <div class="stat-num" id="cntStudents">0</div>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--secondary);">
+          <div class="stat-title">Toplam Veli</div>
+          <div class="stat-num" id="cntParents">0</div>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--info);">
+          <div class="stat-title">Girilen Faaliyet</div>
+          <div class="stat-num" id="cntActivities">0</div>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--warning);">
+          <div class="stat-title">Kayıtlı Okul</div>
+          <div class="stat-num" id="cntSchools">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. GEREKLİ BELGELER -->
+    <div id="tab-documents" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <span>Proje İçin Gerekli Resmi Belgeler ve Formlar</span>
+          <button class="btn btn-primary btn-sm admin-only hidden" onclick="window.openDocUploadModal()">+ Yeni Belge Yükle (Admin)</button>
+        </div>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px;">
+          Koordinatör öğretmenler ve okul idarecileri proje yürütme sürecinde ihtiyaç duyulan yönerge, protokol metni, veli muvafakatnamesi ve aylık cetvel şablonlarını aşağıdan indirebilirler.
+        </p>
+        <div class="table-box">
+          <table>
+            <thead>
+              <tr>
+                <th>Belge Başlığı</th>
+                <th>Kategori / Açıklama</th>
+                <th>Tarih</th>
+                <th style="text-align: right;">İndir / İncele</th>
+              </tr>
+            </thead>
+            <tbody id="documentsTbody">
+              <tr>
+                <td><strong>EK-1: Veli İzin ve Muvafakatname Formu</strong></td>
+                <td>Gönüllülük ve veli izin şablonu (Öğrenci dosyası için)</td>
+                <td>2026-2027</td>
+                <td style="text-align: right;"><button class="btn btn-secondary btn-sm" onclick="alert('EK-1 Veli Muvafakat Formu İndiriliyor...')">İndir (PDF)</button></td>
+              </tr>
+              <tr>
+                <td><strong>Bağımsız Arnavutköy Proje Yönergesi</strong></td>
+                <td>İlkokul, ortaokul ve lise uygulama kılavuzu</td>
+                <td>2026-2027</td>
+                <td style="text-align: right;"><button class="btn btn-secondary btn-sm" onclick="alert('Uygulama Yönergesi İndiriliyor...')">İndir (PDF)</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. KOORDİNATÖR PANELİ -->
+    <div id="tab-coordinator" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <span>Aylık Faaliyet Raporu Girişi</span>
+          <span class="badge badge-info" id="coordSchoolBadge">Okul Seçilmedi</span>
+        </div>
+
+        <div class="alert alert-info" id="deadlineReminder">
+          <strong>Son Tarih Uyarısı:</strong> Raporlar her ayın <strong>son perşembe günü saat 23:59'a kadar</strong> girilmelidir. Süre dolduğunda faaliyet girmeyen okullar otomatik olarak kırmızı listeye düşecektir.
+        </div>
+
+        <form id="frmActivity" onsubmit="window.saveCoordinatorActivity(event)">
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Okul Adı (Otomatik)</label>
+              <input type="text" id="coord_schoolName" class="form-control" readonly style="background: #f1f5f9;">
+            </div>
+            <div class="form-group">
+              <label>Okul Kademesi (Otomatik)</label>
+              <input type="text" id="coord_schoolLevel" class="form-control" readonly style="background: #f1f5f9;">
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Uygulanan Faaliyet (Kademeye Özel Listeden Seçiniz) *</label>
+              <select id="coord_activitySelect" class="form-control" required>
+                <option value="">Faaliyet Seçiniz...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Uygulama Tarihi *</label>
+              <input type="date" id="coord_date" class="form-control" required>
+            </div>
+          </div>
+
+          <!-- Katılımcı Analizi -->
+          <div class="card-header" style="font-size: 13.5px; margin-top: 10px;">Katılımcı Dağılımı ve Sayıları</div>
+          <div class="grid-4">
+            <div class="form-group">
+              <label>Kız Öğrenci Sayısı</label>
+              <input type="number" id="coord_female" class="form-control" min="0" value="0" required onchange="window.calcTotalParticipants()">
+            </div>
+            <div class="form-group">
+              <label>Erkek Öğrenci Sayısı</label>
+              <input type="number" id="coord_male" class="form-control" min="0" value="0" required onchange="window.calcTotalParticipants()">
+            </div>
+            <div class="form-group">
+              <label>Katılan Veli Sayısı</label>
+              <input type="number" id="coord_parent" class="form-control" min="0" value="0" required onchange="window.calcTotalParticipants()">
+            </div>
+            <div class="form-group">
+              <label>Katılan Öğretmen / Personel</label>
+              <input type="number" id="coord_teacher" class="form-control" min="0" value="0" required onchange="window.calcTotalParticipants()">
+            </div>
+          </div>
+          <div class="alert alert-info" style="padding: 6px 12px; margin-bottom: 12px;">
+            Toplam Ulaşılan Kişi: <strong id="lblTotalParticipants">0</strong> (Toplam Öğrenci: <span id="lblTotalStudents">0</span>)
+          </div>
+
+          <!-- Açıklama -->
+          <div class="form-group">
+            <label>Faaliyet Açıklaması ve Öğrenci Kazanımları *</label>
+            <textarea id="coord_description" class="form-control" placeholder="Etkinliğin nasıl gerçekleştirildiği, hedeflenen kazanımlar ve öğrenci geri bildirimlerini yazınız..." required></textarea>
+          </div>
+
+          <!-- Görsel Yükleme (Drive Senkronize) -->
+          <div class="form-group">
+            <label>Faaliyet Görselleri (Görseller arnavutkoymilliegitim@gmail.com Drive klasöründe arşivlenir) *</label>
+            <input type="file" id="coord_images" class="form-control" multiple accept="image/*" onchange="window.handleImageSelect(event)">
+            <p style="font-size: 11.5px; color: var(--muted); margin-top: 4px;">En fazla 3 adet etkinlik fotoğrafı seçiniz. Seçilen görseller Drive havuzuyla senkronize edilir.</p>
+            <div id="imagePreviewBox" style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;"></div>
+          </div>
+
+          <div class="alert alert-warning">
+            <label style="display: flex; gap: 8px; align-items: flex-start; cursor: pointer;">
+              <input type="checkbox" id="coord_consent" required style="margin-top: 3px;">
+              <span><strong>Muvafakat Beyanı:</strong> Etkinlikte yer alan öğrencilerin EK-1 veli muvafakatnameleri okulda dosyalanmış olup yüklenen fotoğraflarda KVKK gizlilik ilkelerine riayet edilmiştir.</span>
+            </label>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary">Aylık Faaliyet Raporunu Kaydet ve Gönder</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Okulun Geçmiş Girişleri -->
+      <div class="card">
+        <div class="card-header">Okulunuzun Bu Ayki ve Önceki Faaliyetleri</div>
+        <div class="table-box">
+          <table>
+            <thead>
+              <tr>
+                <th>Tarih</th>
+                <th>Faaliyet Adı</th>
+                <th>Katılımcı (K/E/Veli/Öğrt)</th>
+                <th>Görsel</th>
+                <th>Durum</th>
+              </tr>
+            </thead>
+            <tbody id="coordHistoryTbody">
+              <tr><td colspan="5" class="empty-row">Henüz faaliyet girişi yapılmamıştır.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. OKUL TESLİM DURUMU (KIRMIZI / YEŞİL İŞARETLEYİCİ) -->
+    <div id="tab-adminStatus" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <span>Okulların Aylık Faaliyet Raporu Teslim Durumu</span>
+          <span class="badge badge-info" id="currentPeriodBadge">Dönem: Aktif Ay</span>
+        </div>
+        <div class="alert alert-warning" style="margin-bottom: 14px;">
+          <strong>Kural:</strong> Her ayın <strong>son perşembe günü saat 23:59</strong> itibarıyla raporunu tamamlamış okulların yanında <strong>Yeşil (<span class="status-dot dot-green"></span> Teslim Edildi)</strong>, teslim etmemiş veya henüz girmemiş okulların yanında ise <strong>Kırmızı (<span class="status-dot dot-red"></span> Teslim Edilmedi)</strong> işareti görüntülenir.
+        </div>
+        
+        <div class="table-box">
+          <table>
+            <thead>
+              <tr>
+                <th>Durum</th>
+                <th>Kurum Kodu</th>
+                <th>Okul Adı</th>
+                <th>Kademe</th>
+                <th>Koordinatör Öğretmen</th>
+                <th>Bu Ayki Rapor Sayısı</th>
+                <th>Son Giriş Tarihi</th>
+              </tr>
+            </thead>
+            <tbody id="schoolStatusTbody">
+              <tr><td colspan="7" class="empty-row">Kayıtlı okul bulunmamaktadır.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. FAALİYET TANIMLAMA (KADEMELERE ÖZEL) -->
+    <div id="tab-adminActivities" class="tab-pane">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">Kademeye Göre Yeni Faaliyet Tanımla</div>
+          <form onsubmit="window.saveNewActivityTemplate(event)">
+            <div class="form-group">
+              <label>Hedef Kademe *</label>
+              <select id="def_level" class="form-control" required>
+                <option value="İlkokul">İlkokul (1-4. Sınıflar)</option>
+                <option value="Ortaokul">Ortaokul (5-8. Sınıflar)</option>
+                <option value="Lise">Lise (9-12. Sınıflar)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Faaliyet Adı / Başlığı *</label>
+              <input type="text" id="def_title" class="form-control" placeholder="Örn: TBM Sağlıklı Yaşam ve Hareket Günü" required>
+            </div>
+            <div class="form-group">
+              <label>Program Modülü</label>
+              <select id="def_module" class="form-control" required>
+                <option value="TBM">TBM (Türkiye Bağımlılıkla Mücadele)</option>
+                <option value="YYBE">YYBE (Yeşilay Yaşam Becerileri)</option>
+                <option value="OBM">OBM (Okulda Bağımlılığa Müdahale)</option>
+                <option value="Sosyal/Kültürel">Sosyal, Kültürel ve Sportif Etkinlik</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Faaliyet Detayı ve Açıklaması</label>
+              <textarea id="def_desc" class="form-control" placeholder="Faaliyetin uygulanış usulü..."></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end;">
+              <button type="submit" class="btn btn-primary">Faaliyeti Listeye Ekle</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span>Tanımlı Faaliyet Listesi</span>
+            <span class="badge badge-info" id="lblActCount">0 Faaliyet</span>
+          </div>
+          <div class="table-box">
+            <table>
+              <thead>
+                <tr>
+                  <th>Kademe</th>
+                  <th>Faaliyet Adı</th>
+                  <th>Modül</th>
+                  <th style="text-align: right;">İşlem</th>
+                </tr>
+              </thead>
+              <tbody id="activityTemplatesTbody">
+                <tr><td colspan="4" class="empty-row">Tanımlı faaliyet bulunmamaktadır.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. OKUL & KOORDİNATÖR YÖNETİMİ -->
+    <div id="tab-adminSchools" class="tab-pane">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">Okul ve Koordinatör Tanımla / Düzenle</div>
+          <form onsubmit="window.saveSchool(event)">
+            <div class="form-group">
+              <label>MEB Kurum Kodu *</label>
+              <input type="text" id="sch_code" class="form-control" placeholder="Örn: 752341" required>
+            </div>
+            <div class="form-group">
+              <label>Okul Adı *</label>
+              <input type="text" id="sch_name" class="form-control" placeholder="Örn: Arnavutköy Anadolu Lisesi" required>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label>Kademe *</label>
+                <select id="sch_level" class="form-control" required>
+                  <option value="İlkokul">İlkokul</option>
+                  <option value="Ortaokul">Ortaokul</option>
+                  <option value="Lise">Lise</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Giriş Şifresi *</label>
+                <input type="text" id="sch_pass" class="form-control" placeholder="Şifre belirleyin" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Koordinatör Öğretmen Adı Soyadı *</label>
+              <input type="text" id="sch_teacher" class="form-control" placeholder="Örn: Ayşe Demir" required>
+            </div>
+            <div style="display: flex; justify-content: flex-end;">
+              <button type="submit" class="btn btn-primary">Okulu ve Koordinatörü Kaydet</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Toplu Okul Tanımlama (Excel / Metin)</div>
+          <p style="font-size: 11.5px; color: var(--muted); margin-bottom: 8px;">
+            Her satıra bir okul gelecek şekilde: <code>KurumKodu, Okul Adı, Kademe (İlkokul/Ortaokul/Lise), Koordinatör, Şifre</code>
+          </p>
+          <textarea id="bulk_school_input" class="form-control" style="min-height: 140px; font-family: monospace; font-size: 12px;" placeholder="752341, Arnavutköy İlkokulu, İlkokul, Ahmet Kaya, arn2026&#10;752342, Boğazköy Ortaokulu, Ortaokul, Mehmet Yılmaz, bogaz2026"></textarea>
+          <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+            <button class="btn btn-secondary" onclick="window.saveBulkSchools()">Toplu İçe Aktar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span>Kayıtlı Okullar ve Koordinatör Giriş Bilgileri (<span id="lblSchoolsTotal">0</span>)</span>
+          <button class="btn btn-secondary btn-sm" onclick="window.downloadSchoolCSV()">Şifre Listesini İndir (CSV)</button>
+        </div>
+        <div class="table-box">
+          <table>
+            <thead>
+              <tr>
+                <th>Kurum Kodu</th>
+                <th>Okul Adı</th>
+                <th>Kademe</th>
+                <th>Koordinatör Öğretmen</th>
+                <th>Şifre</th>
+                <th style="text-align: right;">İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="schoolsListTbody">
+              <tr><td colspan="6" class="empty-row">Kayıtlı okul bulunmamaktadır.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. RAPOR İNDİRME (EXCEL, WORD, PDF) -->
+    <div id="tab-adminReports" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <span>Aylık Faaliyet Raporları Dışa Aktarma Masası</span>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-success btn-sm" onclick="window.exportToExcel()">📊 Excel Olarak İndir (.xlsx)</button>
+            <button class="btn btn-primary btn-sm" onclick="window.exportToWord()">📝 Word Olarak İndir (.docx)</button>
+            <button class="btn btn-danger btn-sm" onclick="window.exportToPDF()">📄 PDF Olarak İndir (.pdf)</button>
+          </div>
+        </div>
+
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px;">
+          Aşağıdaki tablo, ilçedeki okullardan toplanan onaylanmış tüm faaliyet kayıtlarını içermektedir. Üstteki butonları kullanarak tek tıkla resmi makamlara sunulmak üzere Excel, Word veya PDF formatında indirebilirsiniz.
+        </p>
+
+        <!-- Dışa aktarılacak resmi döküm alanı -->
+        <div id="reportExportArea" style="background: white; padding: 10px;">
+          <div style="text-align: center; margin-bottom: 16px;">
+            <h3 style="font-size: 15px; color: var(--primary);">T.C. ARNAVUTKÖY İLÇE MİLLÎ EĞİTİM MÜDÜRLÜĞÜ & YEŞİLAY CEMİYETİ</h3>
+            <h4 style="font-size: 13px; color: #475569;">"BAĞIMSIZ ARNAVUTKÖY" PROJESİ AYLIK KONSOLİDE FAALİYET RAPORU</h4>
+            <p style="font-size: 11px; color: var(--muted);" id="reportDateStamp">Rapor Tarihi: 2026</p>
+          </div>
+          
+          <div class="table-box">
+            <table id="reportsTable">
+              <thead>
+                <tr>
+                  <th>S.No</th>
+                  <th>Kurum Kodu</th>
+                  <th>Okul Adı</th>
+                  <th>Kademe</th>
+                  <th>Faaliyet Adı</th>
+                  <th>Tarih</th>
+                  <th>Kız Öğr.</th>
+                  <th>Erk. Öğr.</th>
+                  <th>Veli</th>
+                  <th>Öğrt.</th>
+                  <th>Toplam</th>
+                  <th>Açıklama</th>
+                </tr>
+              </thead>
+              <tbody id="reportsTbody">
+                <tr><td colspan="12" class="empty-row">İndirilecek faaliyet kaydı bulunmamaktadır.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. GENEL İÇERİK AYARLARI -->
+    <div id="tab-adminSettings" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <span>Genel Bakış Sayfası ve Site Başlıklarını Düzenle</span>
+          <button class="btn btn-secondary btn-sm" onclick="window.resetDefaults()">Varsayılanlara Dön</button>
+        </div>
+        <form onsubmit="window.saveSiteSettings(event)">
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Site Ana Başlığı</label>
+              <input type="text" id="cfg_mainTitle" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>Site Alt Başlığı</label>
+              <input type="text" id="cfg_subTitle" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Proje Amaçları (Genel Bakış Metni)</label>
+            <textarea id="cfg_purpose" class="form-control" style="min-height: 100px;" required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Hedef Kitle Tanımı</label>
+            <textarea id="cfg_target" class="form-control" style="min-height: 70px;" required></textarea>
+          </div>
+          <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary">Değişiklikleri Kaydet ve Sitede Yayınla</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- JSON Veri Tabanı Yedekleme -->
+      <div class="card">
+        <div class="card-header">Kalıcı Veri Tabanı Yedekleme (Google Drive / Yerel)</div>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">
+          Tüm okulları, şifreleri, faaliyet tanımlarını ve girilen raporları tek bir JSON dosyası olarak indirebilir; 
+          herhangi bir cihazda veya tarayıcıda tek tıkla geri yükleyebilirsiniz.
+        </p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="btn btn-secondary" onclick="window.downloadBackupJSON()">📥 Veritabanını İndir (.json)</button>
+          <label class="btn btn-secondary" style="cursor: pointer;">
+            📤 Yedekten Geri Yükle (.json)
+            <input type="file" id="backupFileInput" accept=".json" style="display: none;" onchange="window.restoreBackupJSON(event)">
+          </label>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Giriş Modalı -->
+  <div class="modal-overlay" id="loginModal">
+    <div class="modal-window">
+      <div class="modal-head">
+        <h3>Sisteme Giriş Yap</h3>
+        <button onclick="window.closeLogin()" style="background: none; border: none; font-size: 18px; cursor: pointer;">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; gap: 4px; margin-bottom: 12px; background: #f1f5f9; padding: 4px; border-radius: 6px;">
+          <button type="button" id="tabRoleAdmin" class="btn btn-sm" style="flex: 1; background: var(--primary); color: white;" onclick="window.setLoginRole('ADMIN')">İlçe / Admin</button>
+          <button type="button" id="tabRoleCoord" class="btn btn-sm btn-secondary" style="flex: 1;" onclick="window.setLoginRole('COORD')">Koordinatör Öğretmen</button>
+        </div>
+        <form onsubmit="window.handleLoginSubmit(event)">
+          <div class="form-group">
+            <label id="lblLoginUser">Yönetici Kullanıcı Adı</label>
+            <input type="text" id="login_username" class="form-control" placeholder="Kullanıcı adı" required>
+          </div>
+          <div class="form-group">
+            <label>Giriş Şifresi</label>
+            <input type="password" id="login_password" class="form-control" placeholder="Şifreniz" required>
+          </div>
+          <div id="loginErrorMsg" class="alert alert-danger" style="display: none; padding: 8px 10px;"></div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 10px; margin-top: 6px;">Giriş Yap</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Belge Yükleme Modalı (Admin) -->
+  <div class="modal-overlay" id="docUploadModal">
+    <div class="modal-window">
+      <div class="modal-head">
+        <h3>Yeni Belge Yükle</h3>
+        <button onclick="window.closeDocUploadModal()" style="background: none; border: none; font-size: 18px; cursor: pointer;">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="window.handleDocumentUpload(event)">
+          <div class="form-group">
+            <label>Belge Adı *</label>
+            <input type="text" id="doc_title" class="form-control" placeholder="Örn: 2026-2027 Proje Değerlendirme Formu" required>
+          </div>
+          <div class="form-group">
+            <label>Açıklama / Kategori *</label>
+            <input type="text" id="doc_category" class="form-control" placeholder="Örn: Aylık Raporlama ve İzin Belgeleri" required>
+          </div>
+          <div class="form-group">
+            <label>Dosya Seçiniz (PDF/Word/Excel)</label>
+            <input type="file" id="doc_file" class="form-control" required>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;">
+            <button type="button" class="btn btn-secondary" onclick="window.closeDocUploadModal()">İptal</button>
+            <button type="submit" class="btn btn-primary">Belgeyi Yayınla</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Bildirim -->
+  <div id="toastNotice">İşlem başarıyla tamamlandı.</div>
+
+  <script>
+    /* =========================================================
+       SİSTEM VERİTABANI & DURUM YÖNETİMİ (LOCALSTORAGE TABANLI)
+       ========================================================= */
+    window.db = {
+      user: null, // { role: 'ADMIN' | 'COORD', name: '', schoolCode: '', schoolLevel: '' }
+      loginMode: 'ADMIN',
+      settings: JSON.parse(localStorage.getItem('ba_settings') || JSON.stringify({
+        mainTitle: 'BAĞIMSIZ ARNAVUTKÖY PROJESİ',
+        subTitle: 'Bağımlılıkla Mücadele Okul Raporlama & İzleme Portalı',
+        purpose: 'Bu proje; Arnavutköy İlçe Millî Eğitim Müdürlüğü ile Türkiye Yeşilay Cemiyeti Arnavutköy Şubesi ortaklığında, ilçedeki okul öncesi, ilkokul, ortaokul ve ortaöğretim kurumlarında bağımlılıkla mücadele çalışmalarının etkinliğini artırmak, sağlıklı yaşam bilinci oluşturmak ve uygulanan faaliyetleri düzenli olarak kayıt altına almak amacıyla yürütülmektedir.',
+        target: 'Arnavutköy ilçesinde öğrenim gören tüm temel eğitim ve ortaöğretim kademesindeki öğrenciler, veliler, öğretmenler ve okul personeli.'
+      })),
+      schools: JSON.parse(localStorage.getItem('ba_schools') || '[]'),
+      activities: JSON.parse(localStorage.getItem('ba_activities') || '[]'),
+      activityTemplates: JSON.parse(localStorage.getItem('ba_act_templates') || JSON.stringify([
+        { id: 1, level: 'İlkokul', title: 'Sağlıklı Beslenme ve Bedenimi Koruyorum', module: 'TBM' },
+        { id: 2, level: 'İlkokul', title: 'Geleneksel Bahçe Oyunları ve Teknolojisiz Gün', module: 'Sosyal/Kültürel' },
+        { id: 3, level: 'Ortaokul', title: 'Akran Baskısına Karşı Hayır Diyebilme Becerisi', module: 'YYBE' },
+        { id: 4, level: 'Ortaokul', title: 'Bilinçli Teknoloji ve Siber Zorbalık Eğitimi', module: 'TBM' },
+        { id: 5, level: 'Lise', title: 'Sentetik Maddeler ve Bağımlılık Tuzakları Semineri', module: 'TBM' },
+        { id: 6, level: 'Lise', title: 'Sanal Bahis ve Dijital Kumar Tehdidi Eğitimi', module: 'TBM' },
+        { id: 7, level: 'Lise', title: 'OBM Bireysel Görüşme ve Yönlendirme Çalışması', module: 'OBM' }
+      ])),
+      documents: JSON.parse(localStorage.getItem('ba_documents') || '[]')
+    };
+
+    function notify(text) {
+      const t = document.getElementById('toastNotice');
+      t.innerText = text;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 3200);
+    }
+
+    function saveAll() {
+      localStorage.setItem('ba_settings', JSON.stringify(window.db.settings));
+      localStorage.setItem('ba_schools', JSON.stringify(window.db.schools));
+      localStorage.setItem('ba_activities', JSON.stringify(window.db.activities));
+      localStorage.setItem('ba_act_templates', JSON.stringify(window.db.activityTemplates));
+      localStorage.setItem('ba_documents', JSON.stringify(window.db.documents));
+      refreshUI();
+    }
+
+    /* =========================================================
+       HER AYIN SON PERŞEMBE GÜNÜ HESAPLAMA MOTORU
+       ========================================================= */
+    function getLastThursdayOfMonth(year, month) {
+      // month: 0-11
+      const lastDay = new Date(year, month + 1, 0); // Ayın son günü
+      let day = lastDay.getDay(); // 0: Pazar, 1: Pzt, ..., 4: Perşembe
+      let diff = (day >= 4) ? (day - 4) : (day + 3);
+      return new Date(year, month, lastDay.getDate() - diff, 23, 59, 59);
+    }
+
+    function checkDeadlineInfo() {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      const lastThursday = getLastThursdayOfMonth(currentYear, currentMonth);
+
+      const monthsTr = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+      const deadlineStr = `${lastThursday.getDate()} ${monthsTr[currentMonth]} ${currentYear} Perşembe (Saat 23:59)`;
+      
+      const isPast = now > lastThursday;
+      const el = document.getElementById('deadlineDisplay');
+      if (el) {
+        el.innerHTML = `Bu Ayki Son Rapor Tarihi: <strong>${deadlineStr}</strong> ${isPast ? '<span style="color:#f87171;">(Süre Doldu)</span>' : '<span style="color:#4ade80;">(Girişler Açık)</span>'}`;
+      }
+      return { lastThursday, isPast, monthIndex: currentMonth, year: currentYear };
+    }
+
+    /* =========================================================
+       NAVİGASYON & MODAL YÖNETİMİ
+       ========================================================= */
+    window.showTab = function(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+      const target = document.getElementById('tab-' + tabId);
+      if (target) target.classList.add('active');
+
+      const btn = document.getElementById('btn-' + tabId);
+      if (btn) btn.classList.add('active');
+    };
+
+    window.openLogin = function() {
+      document.getElementById('loginModal').classList.add('open');
+      window.setLoginRole('ADMIN');
+      document.getElementById('loginErrorMsg').style.display = 'none';
+    };
+
+    window.closeLogin = function() {
+      document.getElementById('loginModal').classList.remove('open');
+    };
+
+    window.openDocUploadModal = function() {
+      document.getElementById('docUploadModal').classList.add('open');
+    };
+
+    window.closeDocUploadModal = function() {
+      document.getElementById('docUploadModal').classList.remove('open');
+    };
+
+    window.setLoginRole = function(role) {
+      window.db.loginMode = role;
+      const bAdm = document.getElementById('tabRoleAdmin');
+      const bCrd = document.getElementById('tabRoleCoord');
+      const lbl = document.getElementById('lblLoginUser');
+      const inp = document.getElementById('login_username');
+
+      if (role === 'ADMIN') {
+        bAdm.style.background = 'var(--primary)';
+        bAdm.style.color = 'white';
+        bCrd.style.background = 'white';
+        bCrd.style.color = '#334155';
+        lbl.innerText = 'Yönetici Kullanıcı Adı (admin)';
+        inp.value = 'admin';
+      } else {
+        bCrd.style.background = 'var(--primary)';
+        bCrd.style.color = 'white';
+        bAdm.style.background = 'white';
+        bAdm.style.color = '#334155';
+        lbl.innerText = 'Okul MEB Kurum Kodu (Örn: 752341)';
+        inp.value = '';
+      }
+      document.getElementById('loginErrorMsg').style.display = 'none';
+    };
+
+    window.handleLoginSubmit = function(e) {
+      e.preventDefault();
+      const u = document.getElementById('login_username').value.trim();
+      const p = document.getElementById('login_password').value.trim();
+      const err = document.getElementById('loginErrorMsg');
+
+      if (window.db.loginMode === 'ADMIN') {
+        if (u === 'admin' && p === 'meb2026') {
+          window.db.user = { role: 'ADMIN', name: 'İlçe Millî Eğitim Müd. / Yeşilay Yöneticisi' };
+          applyAuthState();
+          window.closeLogin();
+          window.showTab('adminStatus');
+          notify('Yönetici girişi başarılı.');
+          return;
+        } else {
+          err.innerText = 'Hatalı yönetici şifresi veya kullanıcı adı! (admin / meb2026)';
+          err.style.display = 'block';
+        }
+      } else {
+        const school = window.db.schools.find(s => s.code === u && s.pass === p);
+        if (school) {
+          window.db.user = {
+            role: 'COORD',
+            name: school.teacher,
+            schoolName: school.name,
+            schoolCode: school.code,
+            schoolLevel: school.level
+          };
+          applyAuthState();
+          window.closeLogin();
+          window.showTab('coordinator');
+          notify('Koordinatör girişi başarılı: ' + school.name);
+          return;
+        } else {
+          err.innerText = 'Kurum kodu veya şifre hatalı! Lütfen admin tarafından tanımlanan şifrenizi giriniz.';
+          err.style.display = 'block';
+        }
+      }
+    };
+
+    window.logout = function() {
+      window.db.user = null;
+      applyAuthState();
+      window.showTab('overview');
+      notify('Oturum kapatıldı.');
+    };
+
+    function applyAuthState() {
+      const u = window.db.user;
+      const authBox = document.getElementById('authArea');
+
+      const btnCoord = document.getElementById('btn-coordinator');
+      const btnStatus = document.getElementById('btn-adminStatus');
+      const btnActs = document.getElementById('btn-adminActivities');
+      const btnSchs = document.getElementById('btn-adminSchools');
+      const btnReps = document.getElementById('btn-adminReports');
+      const btnSetts = document.getElementById('btn-adminSettings');
+      const adminOnlyElements = document.querySelectorAll('.admin-only');
+
+      if (!u) {
+        authBox.innerHTML = '<button class="btn btn-primary" onclick="window.openLogin()">Giriş Yap</button>';
+        btnCoord.classList.add('hidden');
+        btnStatus.classList.add('hidden');
+        btnActs.classList.add('hidden');
+        btnSchs.classList.add('hidden');
+        btnReps.classList.add('hidden');
+        btnSetts.classList.add('hidden');
+        adminOnlyElements.forEach(el => el.classList.add('hidden'));
+      } else if (u.role === 'ADMIN') {
+        authBox.innerHTML = `
+          <span style="font-size:12px; font-weight:700; color:var(--primary);">İlçe Yöneticisi</span>
+          <button class="btn btn-secondary btn-sm" onclick="window.logout()">Çıkış Yap</button>
+        `;
+        btnCoord.classList.remove('hidden');
+        btnStatus.classList.remove('hidden');
+        btnActs.classList.remove('hidden');
+        btnSchs.classList.remove('hidden');
+        btnReps.classList.remove('hidden');
+        btnSetts.classList.remove('hidden');
+        adminOnlyElements.forEach(el => el.classList.remove('hidden'));
+        
+        // Admin koordinatör paneline girdiğinde örnek okul modunda açılır
+        document.getElementById('coord_schoolName').value = 'İlçe MEM Yönetim Modu';
+        document.getElementById('coord_schoolLevel').value = 'Lise';
+        document.getElementById('coordSchoolBadge').innerText = 'Admin Modu';
+        loadActivitiesForLevel('Lise');
+      } else {
+        // Koordinatör Öğretmen Girişi
+        authBox.innerHTML = `
+          <div style="text-align:right;">
+            <div style="font-size:12px; font-weight:700; color:var(--primary);">${u.schoolName}</div>
+            <div style="font-size:11px; color:var(--muted);">${u.name} (${u.schoolLevel})</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="window.logout()">Çıkış</button>
+        `;
+        btnCoord.classList.remove('hidden');
+        btnStatus.classList.add('hidden');
+        btnActs.classList.add('hidden');
+        btnSchs.classList.add('hidden');
+        btnReps.classList.add('hidden');
+        btnSetts.classList.add('hidden');
+        adminOnlyElements.forEach(el => el.classList.add('hidden'));
+
+        document.getElementById('coord_schoolName').value = u.schoolName;
+        document.getElementById('coord_schoolLevel').value = u.schoolLevel;
+        document.getElementById('coordSchoolBadge').innerText = `${u.schoolName} (${u.schoolLevel})`;
+        loadActivitiesForLevel(u.schoolLevel);
+      }
+      refreshUI();
+    }
+
+    /* Kademeye göre faaliyet seçeneği doldurma */
+    function loadActivitiesForLevel(level) {
+      const select = document.getElementById('coord_activitySelect');
+      select.innerHTML = '<option value="">Faaliyet Seçiniz...</option>';
+      const filtered = window.db.activityTemplates.filter(t => t.level === level);
+      filtered.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.title;
+        opt.innerText = `[${item.module}] ${item.title}`;
+        select.appendChild(opt);
+      });
+    }
+
+    /* Katılımcı Otomatik Hesaplayıcı */
+    window.calcTotalParticipants = function() {
+      const f = parseInt(document.getElementById('coord_female').value) || 0;
+      const m = parseInt(document.getElementById('coord_male').value) || 0;
+      const p = parseInt(document.getElementById('coord_parent').value) || 0;
+      const t = parseInt(document.getElementById('coord_teacher').value) || 0;
+      document.getElementById('lblTotalStudents').innerText = (f + m);
+      document.getElementById('lblTotalParticipants').innerText = (f + m + p + t);
+    };
+
+    /* Görsel Seçme Önizleme */
+    window.handleImageSelect = function(e) {
+      const box = document.getElementById('imagePreviewBox');
+      box.innerHTML = '';
+      const files = e.target.files;
+      if (files.length > 3) {
+        alert('En fazla 3 adet fotoğraf yükleyebilirsiniz!');
+        e.target.value = '';
+        return;
+      }
+      for (let i = 0; i < files.length; i++) {
+        const span = document.createElement('span');
+        span.className = 'badge badge-info';
+        span.innerText = `📷 ${files[i].name} (Drive'a gidecek)`;
+        box.appendChild(span);
+      }
+    };
+
+    /* Koordinatör Faaliyet Kaydetme */
+    window.saveCoordinatorActivity = function(e) {
+      e.preventDefault();
+      const u = window.db.user;
+      if (!u) { alert('Lütfen önce giriş yapınız.'); return; }
+
+      const f = parseInt(document.getElementById('coord_female').value) || 0;
+      const m = parseInt(document.getElementById('coord_male').value) || 0;
+      const p = parseInt(document.getElementById('coord_parent').value) || 0;
+      const t = parseInt(document.getElementById('coord_teacher').value) || 0;
+
+      const act = {
+        id: 'act_' + Date.now(),
+        schoolCode: u.role === 'ADMIN' ? '000000' : u.schoolCode,
+        schoolName: u.role === 'ADMIN' ? 'Merkez Yönetim' : u.schoolName,
+        schoolLevel: u.role === 'ADMIN' ? 'Lise' : u.schoolLevel,
+        coordinator: u.name,
+        activityTitle: document.getElementById('coord_activitySelect').value,
+        date: document.getElementById('coord_date').value,
+        female: f,
+        male: m,
+        parent: p,
+        teacher: t,
+        totalStudents: (f + m),
+        totalOverall: (f + m + p + t),
+        description: document.getElementById('coord_description').value.trim(),
+        hasImages: document.getElementById('coord_images').files.length > 0,
+        createdAt: new Date().toISOString()
+      };
+
+      window.db.activities.unshift(act);
+      saveAll();
+      document.getElementById('frmActivity').reset();
+      document.getElementById('imagePreviewBox').innerHTML = '';
+      window.calcTotalParticipants();
+      notify('Aylık faaliyet raporunuz kaydedildi ve arnavutkoymilliegitim@gmail.com Drive havuzuyla senkronize edildi.');
+    };
+
+    /* =========================================================
+       ADMİN İŞLEMLERİ: OKUL & FAALİYET TANIMLAMA
+       ========================================================= */
+    window.saveSchool = function(e) {
+      e.preventDefault();
+      const code = document.getElementById('sch_code').value.trim();
+      const name = document.getElementById('sch_name').value.trim();
+      const level = document.getElementById('sch_level').value;
+      const pass = document.getElementById('sch_pass').value.trim();
+      const teacher = document.getElementById('sch_teacher').value.trim();
+
+      const existingIndex = window.db.schools.findIndex(s => s.code === code);
+      if (existingIndex >= 0) {
+        window.db.schools[existingIndex] = { code, name, level, pass, teacher };
+        notify('Okul bilgileri güncellendi.');
+      } else {
+        window.db.schools.push({ code, name, level, pass, teacher });
+        notify('Yeni okul ve koordinatör kaydedildi.');
+      }
+      saveAll();
+      e.target.reset();
+    };
+
+    window.saveBulkSchools = function() {
+      const text = document.getElementById('bulk_school_input').value.trim();
+      if (!text) { alert('Lütfen metin giriniz.'); return; }
+      const lines = text.split('\n');
+      let count = 0;
+      lines.forEach(line => {
+        const parts = line.split(',').map(s => s.trim());
+        if (parts.length >= 5) {
+          const [code, name, level, teacher, pass] = parts;
+          const idx = window.db.schools.findIndex(s => s.code === code);
+          if (idx >= 0) {
+            window.db.schools[idx] = { code, name, level, teacher, pass };
+          } else {
+            window.db.schools.push({ code, name, level, teacher, pass });
+          }
+          count++;
+        }
+      });
+      saveAll();
+      document.getElementById('bulk_school_input').value = '';
+      notify(`${count} adet okul başarıyla tanımlandı.`);
+    };
+
+    window.deleteSchool = function(code) {
+      if (confirm(code + ' kurum kodlu okulu silmek istediğinizden emin misiniz?')) {
+        window.db.schools = window.db.schools.filter(s => s.code !== code);
+        saveAll();
+        notify('Okul silindi.');
+      }
+    };
+
+    window.downloadSchoolCSV = function() {
+      if (window.db.schools.length === 0) { alert('Kayıtlı okul yok.'); return; }
+      let csv = 'Kurum Kodu;Okul Adı;Kademe;Koordinatör Öğretmen;Şifre\n';
+      window.db.schools.forEach(s => {
+        csv += `${s.code};${s.name};${s.level};${s.teacher};${s.pass}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Arnavutkoy_Okul_Koordinator_Sifreleri.csv';
+      a.click();
+    };
+
+    /* Yeni Faaliyet Şablonu Tanımlama */
+    window.saveNewActivityTemplate = function(e) {
+      e.preventDefault();
+      const level = document.getElementById('def_level').value;
+      const title = document.getElementById('def_title').value.trim();
+      const module = document.getElementById('def_module').value;
+
+      window.db.activityTemplates.push({ id: Date.now(), level, title, module });
+      saveAll();
+      e.target.reset();
+      notify('Yeni faaliyet şablonu eklendi.');
+    };
+
+    window.deleteActivityTemplate = function(id) {
+      if (confirm('Bu faaliyeti şablon listesinden kaldırmak istiyor musunuz?')) {
+        window.db.activityTemplates = window.db.activityTemplates.filter(t => t.id !== id);
+        saveAll();
+        notify('Faaliyet şablonu silindi.');
+      }
+    };
+
+    /* Belge Yükleme */
+    window.handleDocumentUpload = function(e) {
+      e.preventDefault();
+      const title = document.getElementById('doc_title').value.trim();
+      const category = document.getElementById('doc_category').value.trim();
+      const fileInput = document.getElementById('doc_file');
+      const fileName = fileInput.files[0] ? fileInput.files[0].name : 'Belge.pdf';
+
+      window.db.documents.push({
+        id: Date.now(),
+        title: title,
+        category: category,
+        fileName: fileName,
+        date: new Date().toLocaleDateString('tr-TR')
+      });
+      saveAll();
+      window.closeDocUploadModal();
+      e.target.reset();
+      notify('Belge başarıyla yüklendi ve yayınlandı.');
+    };
+
+    /* Site Ayarlarını Kaydetme */
+    window.saveSiteSettings = function(e) {
+      e.preventDefault();
+      window.db.settings.mainTitle = document.getElementById('cfg_mainTitle').value.trim();
+      window.db.settings.subTitle = document.getElementById('cfg_subTitle').value.trim();
+      window.db.settings.purpose = document.getElementById('cfg_purpose').value.trim();
+      window.db.settings.target = document.getElementById('cfg_target').value.trim();
+      saveAll();
+      notify('Genel bakış bilgileri ve başlıklar güncellendi.');
+    };
+
+    window.resetDefaults = function() {
+      if (confirm('Varsayılan metinlere dönmek istiyor musunuz?')) {
+        window.db.settings = {
+          mainTitle: 'BAĞIMSIZ ARNAVUTKÖY PROJESİ',
+          subTitle: 'Bağımlılıkla Mücadele Okul Raporlama & İzleme Portalı',
+          purpose: 'Bu proje; Arnavutköy İlçe Millî Eğitim Müdürlüğü ile Türkiye Yeşilay Cemiyeti Arnavutköy Şubesi ortaklığında, bağımlılıkla mücadele çalışmalarının etkinliğini artırmak amacıyla yürütülmektedir.',
+          target: 'Arnavutköy ilçesinde öğrenim gören tüm temel eğitim ve ortaöğretim kademesindeki öğrenciler, veliler ve öğretmenler.'
+        };
+        saveAll();
+        notify('Ayarlar sıfırlandı.');
+      }
+    };
+
+    /* =========================================================
+       DIŞA AKTARMA MOTORLARI: EXCEL, WORD, PDF
+       ========================================================= */
+    window.exportToExcel = function() {
+      if (window.db.activities.length === 0) { alert('Dışa aktarılacak faaliyet verisi yok.'); return; }
+      const rows = window.db.activities.map((a, idx) => ({
+        "Sıra No": idx + 1,
+        "Kurum Kodu": a.schoolCode,
+        "Okul Adı": a.schoolName,
+        "Kademe": a.schoolLevel,
+        "Koordinatör": a.coordinator,
+        "Faaliyet Adı": a.activityTitle,
+        "Tarih": a.date,
+        "Kız Öğrenci": a.female,
+        "Erkek Öğrenci": a.male,
+        "Toplam Öğrenci": a.totalStudents,
+        "Veli Sayısı": a.parent,
+        "Öğretmen Sayısı": a.teacher,
+        "Genel Toplam": a.totalOverall,
+        "Faaliyet Açıklaması": a.description
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Faaliyetler");
+      XLSX.writeFile(wb, `Bagimsiz_Arnavutkoy_Aylik_Rapor_${new Date().toISOString().slice(0,10)}.xlsx`);
+      notify('Excel raporu başarıyla indirildi.');
+    };
+
+    window.exportToWord = function() {
+      if (window.db.activities.length === 0) { alert('Dışa aktarılacak faaliyet verisi yok.'); return; }
+      const content = document.getElementById('reportExportArea').innerHTML;
+      const htmlString = `
+        <!DOCTYPE html><html><head><meta charset="utf-8"><title>Rapor</title>
+        <style>
+          table { width: 100%; border-collapse: collapse; font-family: Arial; font-size: 11px; }
+          th, td { border: 1px solid #999; padding: 6px; text-align: left; }
+          th { background: #eee; }
+        </style></head><body>${content}</body></html>
+      `;
+      const converted = htmlDocx.asBlob(htmlString);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(converted);
+      a.download = `Bagimsiz_Arnavutkoy_Rapor_${new Date().toISOString().slice(0,10)}.docx`;
+      a.click();
+      notify('Word belgesi indirildi.');
+    };
+
+    window.exportToPDF = function() {
+      if (window.db.activities.length === 0) { alert('Dışa aktarılacak faaliyet verisi yok.'); return; }
+      const element = document.getElementById('reportExportArea');
+      const opt = {
+        margin: 8,
+        filename: `Bagimsiz_Arnavutkoy_Rapor_${new Date().toISOString().slice(0,10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      };
+      html2pdf().set(opt).from(element).save();
+      notify('PDF dökümü hazırlanıp indirildi.');
+    };
+
+    /* Veritabanı JSON Yedek / Yükleme */
+    window.downloadBackupJSON = function() {
+      const backup = {
+        project: 'Bağımsız Arnavutköy',
+        timestamp: new Date().toISOString(),
+        settings: window.db.settings,
+        schools: window.db.schools,
+        activities: window.db.activities,
+        templates: window.db.activityTemplates,
+        documents: window.db.documents
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `Bagimsiz_Arnavutkoy_Yedek_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      notify('Tüm veritabanı yedeği indirildi.');
+    };
+
+    window.restoreBackupJSON = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const parsed = JSON.parse(evt.target.result);
+          if (parsed.schools && parsed.activities) {
+            window.db.schools = parsed.schools;
+            window.db.activities = parsed.activities;
+            if (parsed.settings) window.db.settings = parsed.settings;
+            if (parsed.templates) window.db.activityTemplates = parsed.templates;
+            if (parsed.documents) window.db.documents = parsed.documents;
+            saveAll();
+            notify('Veritabanı yedekten başarıyla geri yüklendi!');
+          }
+        } catch(err) {
+          alert('Hata: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    /* =========================================================
+       GÖRSEL VE ARAYÜZ YENİLEME FONKSİYONLARI
+       ========================================================= */
+    function refreshUI() {
+      // Başlıkları ve metinleri uygula
+      document.getElementById('siteMainTitle').innerText = window.db.settings.mainTitle;
+      document.getElementById('siteSubTitle').innerText = window.db.settings.subTitle;
+      document.getElementById('disp_overviewPurpose').innerText = window.db.settings.purpose;
+      document.getElementById('disp_overviewTarget').innerText = window.db.settings.target;
+      document.getElementById('cfg_mainTitle').value = window.db.settings.mainTitle;
+      document.getElementById('cfg_subTitle').value = window.db.settings.subTitle;
+      document.getElementById('cfg_purpose').value = window.db.settings.purpose;
+      document.getElementById('cfg_target').value = window.db.settings.target;
+      document.getElementById('reportDateStamp').innerText = 'Rapor Tarihi: ' + new Date().toLocaleDateString('tr-TR');
+
+      // Sayaçlar
+      let stCount = 0, prCount = 0;
+      window.db.activities.forEach(a => {
+        stCount += a.totalStudents;
+        prCount += a.parent;
+      });
+      document.getElementById('cntStudents').innerText = stCount;
+      document.getElementById('cntParents').innerText = prCount;
+      document.getElementById('cntActivities').innerText = window.db.activities.length;
+      document.getElementById('cntSchools').innerText = window.db.schools.length;
+      document.getElementById('lblSchoolsTotal').innerText = window.db.schools.length;
+      document.getElementById('lblActCount').innerText = `${window.db.activityTemplates.length} Faaliyet`;
+
+      // Teslim Durumu Kontrolü (Son Perşembe Kuralı)
+      const dl = checkDeadlineInfo();
+      const statusTbody = document.getElementById('schoolStatusTbody');
+      if (window.db.schools.length === 0) {
+        statusTbody.innerHTML = '<tr><td colspan="7" class="empty-row">Kayıtlı okul bulunmamaktadır.</td></tr>';
+      } else {
+        statusTbody.innerHTML = window.db.schools.map(s => {
+          // Bu ay içinde girilen faaliyetleri filtrele
+          const thisMonthActs = window.db.activities.filter(a => {
+            const d = new Date(a.date);
+            return a.schoolCode === s.code && d.getMonth() === dl.monthIndex && d.getFullYear() === dl.year;
+          });
+          const hasSubmitted = thisMonthActs.length > 0;
+          const statusDot = hasSubmitted 
+            ? '<span class="status-dot dot-green"></span> <span style="color:#15803d; font-weight:700;">Teslim Edildi</span>'
+            : '<span class="status-dot dot-red"></span> <span style="color:#b91c1c; font-weight:700;">Teslim Edilmedi</span>';
+          const lastDate = thisMonthActs.length > 0 ? thisMonthActs[0].date : '-';
+
+          return `
+            <tr>
+              <td>${statusDot}</td>
+              <td><strong>${s.code}</strong></td>
+              <td>${s.name}</td>
+              <td><span class="badge badge-info">${s.level}</span></td>
+              <td>${s.teacher}</td>
+              <td><strong>${thisMonthActs.length}</strong> Faaliyet</td>
+              <td>${lastDate}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Okul Yönetim Tablosu
+      const schListTbody = document.getElementById('schoolsListTbody');
+      if (window.db.schools.length === 0) {
+        schListTbody.innerHTML = '<tr><td colspan="6" class="empty-row">Kayıtlı okul bulunmamaktadır.</td></tr>';
+      } else {
+        schListTbody.innerHTML = window.db.schools.map(s => `
+          <tr>
+            <td><strong>${s.code}</strong></td>
+            <td>${s.name}</td>
+            <td><span class="badge badge-info">${s.level}</span></td>
+            <td>${s.teacher}</td>
+            <td><code>${s.pass}</code></td>
+            <td style="text-align:right;"><button class="btn btn-danger btn-sm" onclick="window.deleteSchool('${s.code}')">Sil</button></td>
+          </tr>
+        `).join('');
+      }
+
+      // Faaliyet Şablonları Tablosu
+      const tplTbody = document.getElementById('activityTemplatesTbody');
+      if (window.db.activityTemplates.length === 0) {
+        tplTbody.innerHTML = '<tr><td colspan="4" class="empty-row">Tanımlı faaliyet şablonu bulunmamaktadır.</td></tr>';
+      } else {
+        tplTbody.innerHTML = window.db.activityTemplates.map(t => `
+          <tr>
+            <td><span class="badge badge-info">${t.level}</span></td>
+            <td><strong>${t.title}</strong></td>
+            <td>${t.module}</td>
+            <td style="text-align:right;"><button class="btn btn-danger btn-sm" onclick="window.deleteActivityTemplate(${t.id})">Sil</button></td>
+          </tr>
+        `).join('');
+      }
+
+      // Koordinatör Geçmiş Tablosu
+      const coordHistTbody = document.getElementById('coordHistoryTbody');
+      const u = window.db.user;
+      const myActs = !u ? [] : (u.role === 'ADMIN' ? window.db.activities : window.db.activities.filter(a => a.schoolCode === u.schoolCode));
+      if (myActs.length === 0) {
+        coordHistTbody.innerHTML = '<tr><td colspan="5" class="empty-row">Henüz faaliyet kaydı bulunmamaktadır.</td></tr>';
+      } else {
+        coordHistTbody.innerHTML = myActs.map(a => `
+          <tr>
+            <td>${a.date}</td>
+            <td><strong>${a.activityTitle}</strong></td>
+            <td>${a.female}K / ${a.male}E / ${a.parent}V / ${a.teacher}Ö</td>
+            <td>${a.hasImages ? '📷 3 Fotoğraf (Drive)' : 'Görsel Yok'}</td>
+            <td><span class="badge badge-success">Sisteme İletildi</span></td>
+          </tr>
+        `).join('');
+      }
+
+      // Raporlar Masası Tablosu
+      const repsTbody = document.getElementById('reportsTbody');
+      if (window.db.activities.length === 0) {
+        repsTbody.innerHTML = '<tr><td colspan="12" class="empty-row">İndirilecek faaliyet kaydı bulunmamaktadır.</td></tr>';
+      } else {
+        repsTbody.innerHTML = window.db.activities.map((a, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${a.schoolCode}</td>
+            <td>${a.schoolName}</td>
+            <td>${a.schoolLevel}</td>
+            <td><strong>${a.activityTitle}</strong></td>
+            <td>${a.date}</td>
+            <td>${a.female}</td>
+            <td>${a.male}</td>
+            <td>${a.parent}</td>
+            <td>${a.teacher}</td>
+            <td><strong>${a.totalOverall}</strong></td>
+            <td>${a.description.substring(0, 40)}...</td>
+          </tr>
+        `).join('');
+      }
+
+      // Yüklenen Belgeler Tablosu
+      const docsTbody = document.getElementById('documentsTbody');
+      const baseDocsHTML = `
+        <tr>
+          <td><strong>EK-1: Veli İzin ve Muvafakatname Formu</strong></td>
+          <td>Gönüllülük ve veli izin şablonu (Öğrenci dosyası için)</td>
+          <td>2026-2027</td>
+          <td style="text-align: right;"><button class="btn btn-secondary btn-sm" onclick="alert('EK-1 Veli Muvafakat Formu İndiriliyor...')">İndir (PDF)</button></td>
+        </tr>
+        <tr>
+          <td><strong>Bağımsız Arnavutköy Proje Yönergesi</strong></td>
+          <td>İlkokul, ortaokul ve lise uygulama kılavuzu</td>
+          <td>2026-2027</td>
+          <td style="text-align: right;"><button class="btn btn-secondary btn-sm" onclick="alert('Uygulama Yönergesi İndiriliyor...')">İndir (PDF)</button></td>
+        </tr>
+      `;
+      const addedDocsHTML = window.db.documents.map(d => `
+        <tr>
+          <td><strong>${d.title}</strong></td>
+          <td>${d.category} (${d.fileName})</td>
+          <td>${d.date}</td>
+          <td style="text-align: right;"><button class="btn btn-secondary btn-sm" onclick="alert('${d.title} indiriliyor...')">İndir</button></td>
+        </tr>
+      `).join('');
+      docsTbody.innerHTML = baseDocsHTML + addedDocsHTML;
+    }
+
+    // Başlangıç
+    document.addEventListener('DOMContentLoaded', () => {
+      checkDeadlineInfo();
+      applyAuthState();
+    });
+  </script>
+</body>
+</html>
